@@ -6,7 +6,7 @@ import math
 # webcam = cv2.VideoCapture(0)
 # webcam.set(3,1000)
 # webcam.set(4,1000)
-webcam = cv2.VideoCapture("Videos/bikes.mp4")
+webcam = cv2.VideoCapture("Videos/short_video.mp4")
 
 classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat",
               "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
@@ -20,7 +20,7 @@ classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "trai
               "teddy bear", "hair drier", "toothbrush"
               ]
 
-Model=YOLO("../YOLOweights/yolov8n.pt")
+Model=YOLO("../YOLOweights/yolov8l.pt")
 
 while True:
     success , img = webcam.read()
