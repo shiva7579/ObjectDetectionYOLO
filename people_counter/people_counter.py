@@ -7,7 +7,7 @@ from sort import *
 # webcam = cv2.VideoCapture(0)
 # webcam.set(3,1000)
 # webcam.set(4,1000)
-webcam = cv2.VideoCapture("../Yolo/Videos/cars.mp4")
+webcam = cv2.VideoCapture("../Yolo/Videos/people.mp4")
 
 classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat",
               "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
@@ -21,18 +21,20 @@ classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "trai
               "teddy bear", "hair drier", "toothbrush"
               ]
 mask = cv2.imread("mask.png")
-limits = [400, 297, 673, 297]
+limitsup= [103,161,296,161]
+limitsdown= [527,497,773,497]
 #Tracking
 
 tracker = Sort(max_age=20, min_hits=3, iou_threshold=0.3)
 
 Model=YOLO("../YOLOweights/yolov8l.pt")
-counts = []
+countsup = []
+countsdown = []
 while True:
     success , img = webcam.read()
     imgregion = cv2.bitwise_and(img, mask)
-    imggraphics = cv2.imread ("graphics.png",cv2.IMREAD_UNCHANGED)
-    img = cvzone.overlayPNG(img,imggraphics,(0,0))
+    imggraphics = cv2.imread ("graphics.png", cv2.IMREAD_UNCHANGED)
+    img = cvzone.overlayPNG(img, imggraphics, (730,260))
     results = Model(imgregion, stream= True)
     detections = np.empty((0, 5))
     for r in results:
@@ -49,8 +51,7 @@ while True:
             cls = int(box.cls[0])
             currentclass = classNames[cls]
 
-            if currentclass == "car" or currentclass == "bus" or currentclass == "truck" or currentclass == "motorbike"\
-                and conf > 0.5 :
+            if currentclass == "person" and conf > 0.5 :
                 #cvzone.putTextRect(img, f'{currentclass} {conf}', (max(0, x1), max(40, y1)), scale=1, thickness=3,
                                  # offset=3)
                 #cvzone.cornerRect(img, (x1, y1, w, h), colorR=(0, 0, 255), colorC=(255, 255, 255), l=5)
@@ -58,8 +59,8 @@ while True:
                 detections = np.vstack((detections, currentarray))
 
     resultstracker = tracker.update(detections)
-    cv2.line(img,(limits[0],limits[1]),(limits[2],limits[3]),(255,0,143),2)
-
+    cv2.line(img, (limitsup[0], limitsup[1]), (limitsup[2], limitsup[3]), (255, 0, 143), 2)
+    cv2.line(img, (limitsdown[0], limitsdown[1]), (limitsdown[2], limitsdown[3]), (255, 0, 143), 2)
 
     for results in resultstracker:
         x1, y1, x2, y2, ID= results
@@ -71,12 +72,20 @@ while True:
         cvzone.cornerRect(img, (x1, y1, w, h), colorR=(0, 0, 255), colorC=(255, 255, 255), l=5)
         cx, cy = x1+w//2, y1+h//2
         # cv2.circle(img,(cx,cy),2,(255,0,231),cv2.FILLED)
-        if limits[0] < cx <limits[2] and limits[1]-16 <cy< limits[1]+16:
-            if counts.count(ID) == 0:
-                counts.append(ID)
-                cv2.line(img, (limits[0], limits[1]), (limits[2], limits[3]), (0, 255, 0), 2)
+        if limitsup[0] < cx < limitsup[2] and limitsup[1]-16 < cy < limitsup[1]+16:
+            if countsup.count(ID) == 0:
+                countsup.append(ID)
+                cv2.line(img, (limitsup[0], limitsup[1]), (limitsup[2], limitsup[3]), (0, 255, 0), 2)
 
-        cvzone.putTextRect(img, f'Totalcounts: {len(counts)}', (20,20), scale=1, thickness=2)
+        if limitsdown[0] < cx <limitsdown[2] and limitsdown[1]-16 < cy < limitsdown[1]+16:
+            if countsdown.count(ID) == 0:
+                countsdown.append(ID)
+                cv2.line(img, (limitsdown[0], limitsdown[1]), (limitsdown[2], limitsdown[3]), (0, 255, 0), 2)
+
+        # cvzone.putTextRect(img, f'{len(countsup)}', (950,320), scale=1, thickness=2)
+        # cvzone.putTextRect(img, f'{len(countsdown)}', (1200, 320), scale=1, thickness=2)
+        cv2.putText(img,str(len(countsup)), (950, 350), cv2.FONT_HERSHEY_PLAIN,5,(138,245,0),3)
+        cv2.putText(img, str(len(countsdown)), (1200, 350), cv2.FONT_HERSHEY_PLAIN, 5, (138, 245, 0), 3)
 
 
     # cv2.resize(img,(10,10))
